@@ -8,6 +8,7 @@ struct kDTreeNode
     vector<int> data;
     kDTreeNode *left;
     kDTreeNode *right;
+    int label;
     kDTreeNode(vector<int> data, kDTreeNode *left = nullptr, kDTreeNode *right = nullptr)
     {
         this->data = data;
@@ -53,6 +54,7 @@ private:
     int leafCountRecursive(kDTreeNode* node) const;
     void deleteTree(kDTreeNode* node);
     void printNode(kDTreeNode* node) const;
+    int partitionSort(vector<vector<int>>& points, int start, int end, int cd, int mid);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,13 +78,33 @@ public:
     void buildTree(const vector<vector<int>> &pointList);
     void nearestNeighbour(const vector<int> &target, kDTreeNode *&best);
     void kNearestNeighbour(const vector<int> &target, int k, vector<kDTreeNode *> &bestList);
+
+    kDTreeNode* findNodeWithData(const vector<int>& data);
+    kDTreeNode* findNodeWithDataRecursive(kDTreeNode* node, const vector<int>& data);
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    kDTreeNode* buildTreeHelper(vector<vector<int>>& points, int depth);
+    void mergeSort(vector<vector<int>>& points, int l, int r, int cd);
+    void merge(vector<vector<int>>& points, int l, int m, int r, int cd);
+
+    void nearestNeighbourHelper(kDTreeNode* node, const vector<int>& target, kDTreeNode*& best, int depth);
+    float distance(const vector<int>& a, const vector<int>& b);
+
+    void bubbleSort(vector<pair<float, kDTreeNode*>>& nodes);
+    void kNearestNeighbourHelper(kDTreeNode* node, const vector<int>& target, int k, vector<pair<float, kDTreeNode*>>& bestNodes, int depth);
+
+    void clear();
 };
 
 class kNN
 {
 private:
     int k;
-
+    kDTree tree;
+    Dataset X_train;
+    Dataset y_train;
 public:
     kNN(int k = 5);
     void fit(Dataset &X_train, Dataset &y_train);
