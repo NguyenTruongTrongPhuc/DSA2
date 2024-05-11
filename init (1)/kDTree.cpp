@@ -473,57 +473,107 @@ void kDTree::clear() {
     root = nullptr;    // Reset the root to signify an empty tree
 }
 
-void kNN::fit(Dataset& X_train, Dataset& y_train) {
-    this->X_train = X_train;  // Assuming you want to store X_train in the kNN object
-    this->y_train = y_train;  // Assuming you want to store y_train in the kNN object
+// void kNN::fit(Dataset& X_train, Dataset& y_train) {
+//     this->X_train = X_train; 
+//     this->y_train = y_train; 
 
-    // Ensure the tree is reset or cleared before inserting new data
-    tree.clear();  // Assuming there's a method to clear the kDTree; if not, you might need to reinitialize it
+//     tree.clear();  
 
-    // Iterate over each instance in the training dataset
-    auto it_label = y_train.data.begin();  // Iterator for labels
-    for (auto it = X_train.data.begin(); it != X_train.data.end(); ++it, ++it_label) {
-        if (it_label == y_train.data.end()) {
-            // If there are no more labels but still more features, break to avoid out of range access
-            break;
-        }
+//     // Iterate over each instance in the training dataset
+//     auto it_label = y_train.data.begin();  // Iterator for labels
+//     for (auto it = X_train.data.begin(); it != X_train.data.end(); ++it, ++it_label) {
+//         if (it_label == y_train.data.end()) {
+//             break;
+//         }
 
-        vector<int> target(it->begin(), it->end());  // Convert list<int> to vector<int>
+//         vector<int> target(it->begin(), it->end());
         
-        // Assuming labels are single integers stored in a list of one element
-        int label = it_label->front();  // Get the label from the label dataset
+//         // Assuming labels are single integers stored in a list of one element
+//         int label = it_label->front();  // Get the label from the label dataset
+//         target.push_back(label);
+//         tree.insert(target);
+//     }
+// }
 
-        // Append label to the end of the feature vector
-        target.push_back(label);
+void kNN::fit(Dataset& X_train, Dataset& y_train) {
+    this->X_train = X_train; 
+    this->y_train = y_train;
 
-        // Insert the complete data (features + label) into the kDTree
-        tree.insert(target);
+    tree.clear();  // Ensure the tree is empty before building
+
+    // Collect all data points including labels into a single structure
+    vector<vector<int>> points;
+    auto it_label = y_train.data.begin();
+
+    for (auto it = X_train.data.begin(); it != X_train.data.end() && it_label != y_train.data.end(); ++it, ++it_label) {
+        vector<int> point(it->begin(), it->end());
+        int label = it_label->front();  // Assuming labels are stored as single integers
+        point.push_back(label);  // Append the label to the end of the features vector
+        points.push_back(point);
     }
+
+    // Use buildTree to create a balanced k-D tree
+    tree.buildTree(points);
 }
 
+
+
+// Dataset kNN::predict(Dataset& X_test) {
+//     Dataset predictions;
+//     predictions.columnName.push_back("label");
+//     for (list<list<int>>::iterator it = X_test.data.begin(); it != X_test.data.end(); it++) {
+//         vector<int> target(it->begin(), it->end());
+//         vector<kDTreeNode*> bestList;
+//         tree.kNearestNeighbour(target, k, bestList);
+//         int arr[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//         for (auto it : bestList) {
+//             arr[it->label]++;
+//         }
+//         int max = 0;
+//         int label = 0;
+//         for (int i = 0; i < 10; i++) {
+//             if (arr[i] > max) {
+//                 max = arr[i];
+//                 label = i;
+//             }
+//         }
+//     }
+//     return predictions;
+// }
 
 Dataset kNN::predict(Dataset& X_test) {
     Dataset predictions;
     predictions.columnName.push_back("label");
-    for (list<list<int>>::iterator it = X_test.data.begin(); it != X_test.data.end(); it++) {
+
+    for (auto it = X_test.data.begin(); it != X_test.data.end(); ++it) {
         vector<int> target(it->begin(), it->end());
         vector<kDTreeNode*> bestList;
         tree.kNearestNeighbour(target, k, bestList);
-        int arr[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        for (auto it : bestList) {
-            arr[it->label]++;
-        }
-        int max = 0;
-        int label = 0;
-        for (int i = 0; i < 10; i++) {
-            if (arr[i] > max) {
-                max = arr[i];
-                label = i;
+
+        vector<int> labelCounts(10, 0);  // Adjust size based on the number of possible labels
+        for (auto& node : bestList) {
+            if (node) {
+                int label = node->data.back();  // Assumes label is the last element in data
+                if (label >= 0 && label < labelCounts.size()) {
+                    labelCounts[label]++;
+                }
             }
         }
+
+        // Manually find the label with the maximum count
+        int maxCount = 0, maxLabel = -1;
+        for (int i = 0; i < labelCounts.size(); i++) {
+            if (labelCounts[i] > maxCount) {
+                maxCount = labelCounts[i];
+                maxLabel = i;
+            }
+        }
+        predictions.data.push_back({maxLabel});  // Store the predicted label
     }
+
     return predictions;
 }
+
 
 double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
     double accuracy = 0.0;
