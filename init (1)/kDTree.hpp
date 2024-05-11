@@ -12,8 +12,16 @@ struct kDTreeNode
     kDTreeNode(vector<int> data, kDTreeNode *left = nullptr, kDTreeNode *right = nullptr)
     {
         this->data = data;
+        this->label = 0;
         this->left = left;
         this->right = right;
+    }
+    kDTreeNode(vector<int> data, int label, kDTreeNode *left = nullptr, kDTreeNode *right = nullptr)
+    {
+        this->data = data;
+        this->label = label;
+        this->left = nullptr;
+        this->right = nullptr;
     }
 
     friend ostream &operator<<(ostream &os, const kDTreeNode &node)
